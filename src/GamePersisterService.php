@@ -59,7 +59,6 @@ class GamePersisterService
                 }
             }
             $sql .= implode(",", $sqlUpdateValues);
-            var_dump($sql);
             $this->databaseConnection->query($sql);
         }
     }

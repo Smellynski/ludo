@@ -78,11 +78,8 @@ class Board
                 "colum" => '*',
                 "game_id" => $playerData['game_id'],
             ];
-            if (empty($this->gamePersisterService->loadData($arrayToLoad))) {
-                $this->gamePersisterService->insertData($dataForPlayer);
-            } else {
-                $this->gamePersisterService->updateData($this->dataFactory->createArrayForUpdate($arrayToLoad["table"], array_keys($playerData), $playerData));
-            }
+
+            $this->gamePersisterService->insertData($dataForPlayer);
         }
         $gameData = [
             'state' => $this->getState(),
@@ -91,10 +88,15 @@ class Board
             'game_id' => $this->gameID["game_id"],
         ];
 
-        $arrayToLoad["table"] = 'GameData';
+        var_dump($this->playerCount);
+
+        $arrayToLoad = [
+            "table" => 'GameData',
+            "colum" => '*',
+            "game_id" => $gameData['game_id'],
+        ];
 
         $dataForGame = $this->dataFactory->createArrayForInsert("GameData", $gameData);
-
         if (empty($this->gamePersisterService->loadData($arrayToLoad))) {
             $this->gamePersisterService->insertData($dataForGame);
         } else {
