@@ -9,7 +9,6 @@ class GamePersisterService
     {
         $this->databaseConnection = $this->getPdo();
         $this->pathToFile = $pathToFile;
-        $this->createGame();
     }
 
     private function getPdo(): PDO
@@ -30,7 +29,7 @@ class GamePersisterService
     }
 
 
-    public function resetDataForNewGame()
+    /*public function resetDataForNewGame()
     {
         $data = [
             'gameData' => [
@@ -42,7 +41,7 @@ class GamePersisterService
             'playersData' => []
         ];
         $this->saveDataToFile($data);
-    }
+    }*/
 
     public function updateData($dataToUpdate)
     {
@@ -70,6 +69,7 @@ class GamePersisterService
     {
         $gameID = 'G' . substr(str_replace(['+', '/', '='], '', base64_encode(random_bytes(5))), 0, 7);
         $this->databaseConnection->query("INSERT INTO GameData (game_id) VALUES ('$gameID')");
+        return $gameID;
     }
 
 

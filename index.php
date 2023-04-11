@@ -14,6 +14,7 @@ function generatePlayerID()
 if (isset($_POST["submit"])) {
     if ((int)$_POST["playerCount"] < 5) {
         $board->addPlayerCount((int)$_POST["playerCount"]);
+        $board->addGameID('G' . substr(str_replace(['+', '/', '='], '', base64_encode(random_bytes(5))), 0, 7));
         $board->setState(1);
     }
     $board->saveData();

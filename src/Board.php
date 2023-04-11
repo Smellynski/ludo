@@ -10,14 +10,13 @@ class Board
     private $playerCount;
     private int $state = 0;
     private DataFactory $dataFactory;
-    private $gameID;
+    private string $gameID;
+
 
     public function __construct($pathToSaveFile)
     {
         $this->gamePersisterService = new GamePersisterService($pathToSaveFile);
         $this->dataFactory = new DataFactory();
-        $foo = $this->gamePersisterService->loadData($this->dataFactory->buildArrayToLoadData("GameData", "game_id", null));
-        $this->gameID = end($foo);
         $this->initializeGame();
     }
 
@@ -69,14 +68,15 @@ class Board
             $playerData = [
                 'player_name' => $player->getName(),
                 'player_id' => $player->getPlayerID(),
-                'game_id' => $this->gameID["game_id"],
+                'game_id' => $this->gameID,
             ];
+
             $keys = array_keys($playerData);
             $dataForPlayer = $this->dataFactory->createArrayForInsert("Players", $playerData);
             $arrayToLoad = [
                 "table" => 'Players',
                 "colum" => '*',
-                "game_id" => $playerData['game_id'],
+                "game_id" => $this->gameID,
             ];
 
             $this->gamePersisterService->insertData($dataForPlayer);
@@ -85,15 +85,14 @@ class Board
             'state' => $this->getState(),
             'active_player' => $this->activePlayer != null ? $this->activePlayer->getPlayerID() : '',
             'player_count' => $this->playerCount ?: 0,
-            'game_id' => $this->gameID["game_id"],
+            'game_id' => $this->gameID,
         ];
 
-        var_dump($this->playerCount);
 
         $arrayToLoad = [
             "table" => 'GameData',
             "colum" => '*',
-            "game_id" => $gameData['game_id'],
+            "game_id" => $this->gameID,
         ];
 
         $dataForGame = $this->dataFactory->createArrayForInsert("GameData", $gameData);
@@ -109,6 +108,11 @@ class Board
     public function addPlayerCount(int $playercount)
     {
         $this->playerCount = $playercount;
+    }
+
+    public function addGameID($game_id)
+    {
+        $this->gameID = $game_id;
     }
 
     public function addPlayer(Player $player)
@@ -182,7 +186,7 @@ class Board
 
     public function newGame()
     {
-        $this->gamePersisterService->resetDataForNewGame();
+        //$this->gamePersisterService->resetDataForNewGame();
         $this->initializeGame();
     }
 
