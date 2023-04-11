@@ -1,0 +1,63 @@
+.error {
+  color: red;
+  font-size: larger;
+}
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: #dddddd;
+}
+
+.playField {
+  display: flex;
+  flex-wrap: wrap;
+  width: 500px;
+  height: 500px;
+  margin: auto;
+  background-color: #ffffff;
+  border: 2px solid #000;
+  box-sizing: border-box;
+}
+
+.field {
+  width: 40px;
+  height: 40px;
+  margin: 2px;
+  background-color: #ffffff;
+  border: 1px solid #000;
+  box-sizing: border-box;
+}
+
+.field.red {
+  background-color: #ff0000;
+}
+.field.yellow {
+  background-color: #ffff00;
+}
+.field.green {
+  background-color: #00ff00;
+}
+.field.blue {
+  background-color: #0000ff;
+}
+
+.player {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  position: absolute;
+  z-index: 1;
+}
+
+.player.red {
+  background-color: #ff0000;
+}
+.player.yellow {
+  background-color: #ffff00;
+}
+.player.green {
+  background-color: #00ff00;
+}
+.player.blue {
+  background-color: #0000ff;
+}

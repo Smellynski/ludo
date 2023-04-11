@@ -1,0 +1,41 @@
+version: '3.5'
+services:
+  # CMS
+  php-apache:
+    restart: on-failure
+    build:
+      context: ./docker/php
+    ports:
+      - 8001:80
+    environment:
+      APACHE_DOCUMENT_ROOT: '/var/www/html'
+      REMOTE_USER: ''
+    volumes:
+      - .:/var/www/html:z
+
+  # DB
+  db:
+    image: mariadb:10.3
+    environment:
+      MYSQL_ROOT_PASSWORD: 'db'
+    volumes:
+      - db:/var/lib/mysql
+      - ./backup:/var/backup
+    ports:
+      - 13306:3306
+
+  adminer:
+    image: wodby/adminer:4.7
+    depends_on:
+      - db
+    environment:
+      ADMINER_DEFAULT_DB_DRIVER: mysql
+      ADMINER_DEFAULT_DB_HOST: db
+      ADMINER_DEFAULT_DB_NAME: typo3db
+      ADMINER_DESIGN: nette
+      ADMINER_PLUGINS: tables-filter tinymce
+    ports:
+      - 8080:9000
+
+volumes:
+  db:
