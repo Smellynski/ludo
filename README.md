@@ -10,7 +10,7 @@ Playable with up to 4 people.
 -> to set it up, use the following commands: </br>
     1.  Go into the directory of the game </br>
     2.  paste the following command into your terminal </br>
-        - ```docker-compose build``` 
+        -```docker-compose build``` 
             - wait until its finished 
         - ```docker-compose run``` 
 -> create a local mysql database and use the `databaseSetup.sql` to set it up</br>
