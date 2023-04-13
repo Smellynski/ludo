@@ -5,19 +5,6 @@ Playable with up to 4 people.
 
 # installation
 
-<!-- Copy to clipboard script -->
-<script>
-    function copyToClipboard(text) {
-        const input = document.createElement('textarea');
-        input.innerHTML = text;
-        document.body.appendChild(input);
-        input.select();
-        const result = document.execCommand('copy');
-        document.body.removeChild(input);
-        return result;
-    }
-</script>
-
 <!-- Installation instructions with copy button -->
 -> clone this repository <button onclick="copyToClipboard('git clone https://github.com/Smellynski/ludo.git')">Copy</button> ```git clone https://github.com/Smellynski/ludo.git``` </br>
 -> install [Docker](https://www.docker.com/) <button onclick="copyToClipboard('https://www.docker.com/')">Copy</button> </br>
