@@ -7,5 +7,5 @@ Playable with up to 4 people.
 
 -> clone this repository `git clone https://github.com/Smellynski/ludo.git` </br>
 -> install and setup [Docker](https://www.docker.com/) </br>
--> create a local mysql database and use the `databaseSetup.sql`</br>
+-> create a local mysql database and use the `databaseSetup.sql` to set it up</br>
 -> use the`.env.example`file to create your`.env` file
