@@ -2,7 +2,7 @@
 
 class Board
 {
-    private ?Player $activePlayer = null;
+    private $activePlayer = null;
     private array $players = [];
     private GamePersisterService $gamePersisterService;
     private array $dataGrid;
@@ -13,22 +13,38 @@ class Board
     private string $gameID;
 
 
-    public function __construct($pathToSaveFile)
+    public function __construct($gameId = null)
     {
-        $this->gamePersisterService = new GamePersisterService($pathToSaveFile);
+        $this->gamePersisterService = new GamePersisterService();
+        if (is_null($gameId)) {
+            $this->gameID = $this->gamePersisterService->createGame();
+        } else {
+            $this->gameID = $gameId;
+        }
+
         $this->dataFactory = new DataFactory();
         $this->initializeGame();
     }
 
     private function initializeGame()
     {
+
+        $rawData = $this->gamePersisterService->loadData($this->dataFactory->buildArrayToLoadData("GameData", "*", $this->gameID));
+
+        if (!empty($rawData)) {
+            $data = $rawData[0];
+            $this->state = $data["state"];
+            $this->activePlayer = $data["active_player"];
+            $this->playerCount = $data["player_count"];
+            $this->gameID = $data["game_id"];
+        }
+
         if (!empty($this->players)) {
             $this->loadPlayersFromSavedData($this->gamePersisterService->loadData(
-                $this->dataFactory->buildArrayToLoadData("Players", "player_name, player_id", $this->gameID["game_id"])
+                $this->dataFactory->buildArrayToLoadData("Players", "player_name, player_id, color, pieces", $this->gameID)
             ));
         }
     }
-
     private function rollDice()
     {
         return rand(1, 6);
@@ -51,9 +67,9 @@ class Board
     }
 
 
-    public function createPlayer($name, $playerID)
+    public function createPlayer($name, $playerID, $colorIndex /*$color = int*/)
     {
-        $newPlayer = new Player($name, $playerID);
+        $newPlayer = new Player($name, $playerID, $colorIndex);
         $this->addPlayer($newPlayer);
     }
 
@@ -68,26 +84,32 @@ class Board
             $playerData = [
                 'player_name' => $player->getName(),
                 'player_id' => $player->getPlayerID(),
+                'color' => $player->getColor(),
                 'game_id' => $this->gameID,
             ];
 
-            $keys = array_keys($playerData);
             $dataForPlayer = $this->dataFactory->createArrayForInsert("Players", $playerData);
-            $arrayToLoad = [
-                "table" => 'Players',
-                "colum" => '*',
-                "game_id" => $this->gameID,
-            ];
-
             $this->gamePersisterService->insertData($dataForPlayer);
+
+            $pieces = $player->getPieces();
+            foreach ($pieces as $piece) {
+                $pieces =  [
+                    'piece_id' => $piece,
+                    "pos" => 0,
+                    'owning_player_id' => $player->getPlayerID(),
+                    'game_id' => $this->gameID,
+                ];
+                $dataForPieces = $this->dataFactory->createArrayForInsert("Pieces", $pieces);
+                $this->gamePersisterService->insertData($dataForPieces);
+            }
         }
+
         $gameData = [
             'state' => $this->getState(),
             'active_player' => $this->activePlayer != null ? $this->activePlayer->getPlayerID() : '',
             'player_count' => $this->playerCount ?: 0,
             'game_id' => $this->gameID,
         ];
-
 
         $arrayToLoad = [
             "table" => 'GameData',
@@ -96,6 +118,7 @@ class Board
         ];
 
         $dataForGame = $this->dataFactory->createArrayForInsert("GameData", $gameData);
+
         if (empty($this->gamePersisterService->loadData($arrayToLoad))) {
             $this->gamePersisterService->insertData($dataForGame);
         } else {
@@ -151,35 +174,49 @@ class Board
 
     private function generateDataGridForBoard()
     {
-        $dataGrid = [];
-        for ($i = 0; $i < $this->countOfFields; $i++) {
-            $dataGrid[$i] = 0;
-        }
-        return $dataGrid;
+        $dataGrid = [
+            [2, 2, 0, 0, 1, 1, 1, 0, 0, 2, 2],
+            [2, 2, 0, 0, 1, 3, 1, 0, 0, 2, 2],
+            [0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1],
+            [1, 3, 3, 3, 3, 0, 3, 3, 3, 3, 1],
+            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1],
+            [0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0],
+            [2, 2, 0, 0, 1, 3, 1, 0, 0, 2, 2],
+            [2, 2, 0, 0, 1, 1, 1, 0, 0, 2, 2],
+        ];
+        $this->dataGrid = $dataGrid;
     }
 
     public function generateHTMLForBoard()
     {
+        $this->generateDataGridForBoard();
         $html = '<div class="playField">';
-        foreach ($this->dataGrid as $key => $value) {
-            if ($value == 0) {
-                $html .= '<div class="field"></div>';
-            }
-            if ($value == 1) {
-                $html .= '<div class="player"></div>';
+        for ($y = 0; $y < sizeof($this->dataGrid); $y++) {
+            for ($x = 0; $x < sizeof($this->dataGrid); $x++) {
+                if ($this->dataGrid[$y][$x] == 0) {
+                    $html .= '<div class="field"></div>';
+                } elseif ($this->dataGrid[$y][$x] == 1) {
+                    $html .= '<div class="field normalField"></div>';
+                } elseif ($this->dataGrid[$y][$x] == 2) {
+                    $html .= '<div class="field startField"></div>';
+                } elseif ($this->dataGrid[$y][$x] == 3) {
+                    $html .= '<div class="field finishField"></div>';
+                }
             }
         }
         $html .= '</div>';
-
         return $html;
     }
 
+
+
     private function loadPlayersFromSavedData(array $savedPlayerData)
     {
-        echo "hello";
-        var_dump($savedPlayerData);
         foreach ($savedPlayerData as $savedPlayer) {
-            $player = new Player($savedPlayer['player_name'], $savedPlayer['player_id']);
+            $player = new Player($savedPlayer['player_name'], $savedPlayer['player_id'], $savedPlayer['color']);
             $this->addPlayer($player);
         }
     }
@@ -206,5 +243,10 @@ class Board
     public function getPlayerCount(): mixed
     {
         return $this->playerCount;
+    }
+
+    public function getGameId()
+    {
+        return $this->gameID;
     }
 }

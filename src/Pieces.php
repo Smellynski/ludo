@@ -3,13 +3,15 @@
 class Pieces
 {
     private $id;
-    private $owningPlayer;
+    private $owningPlayerID;
 
-    public function __construct($owningPlayer)
+
+    public function __construct($owningPlayerID)
     {
-        $this->id = uniqid();
-        $this->owningPlayer = $owningPlayer;
+        $this->owningPlayerID = $owningPlayerID;
+        $this->id = $this->generateID();
     }
+
 
     /**
      * @return string
@@ -18,5 +20,12 @@ class Pieces
     {
         return $this->id;
     }
-
+    /**
+     * @return string
+     */
+    private function generateID(): string
+    {
+        $pieceID =  'Piece' . substr(str_replace(['+', '/', '='], '', base64_encode(random_bytes(5))), 0, 7);
+        return $pieceID;
+    }
 }

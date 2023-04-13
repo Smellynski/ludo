@@ -6,16 +6,34 @@ class Player
     protected $name;
     private string $playerID;
     private array $pieces;
+    private string $color;
 
 
-    public function __construct($name, $playerID)
+    public function __construct($name, $playerID, $colorIndex)
     {
         $this->name = $name;
         $this->playerID = $playerID;
+        $this->color = $this->getColorByIndex($colorIndex);
         $this->pieces = $this->addPieces();
     }
 
-    private function addPieces(){
+
+    /**
+     * @return string
+     */
+    private function getColorByIndex($colorIndex): string
+    {
+        $colors = [
+            "red",
+            "blue",
+            "green",
+            "yellow",
+        ];
+        return $colors[$colorIndex];
+    }
+
+    private function addPieces()
+    {
         $piecesForPlayer = [
             "pieceOne" => "",
             "pieceTwo" => "",
@@ -23,7 +41,7 @@ class Player
             "pieceFour" => "",
         ];
 
-        foreach ($piecesForPlayer as &$piece){
+        foreach ($piecesForPlayer as &$piece) {
             $piece = (new Pieces($this->playerID))->getId();
         }
         return $piecesForPlayer;
@@ -67,5 +85,19 @@ class Player
     public function setPlayerID(string $playerID): void
     {
         $this->playerID = $playerID;
+    }
+
+    public function getColor(): string
+    {
+        return $this->color;
+    }
+
+    public function getPiecesAsString(): string
+    {
+        $pieces = "";
+        foreach ($this->pieces as $piece) {
+            $pieces .= $piece . ", ";
+        }
+        return $pieces;
     }
 }

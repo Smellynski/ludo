@@ -2,13 +2,11 @@
 
 class GamePersisterService
 {
-    private $pathToFile;
     private PDO $databaseConnection;
 
-    public function __construct($pathToFile)
+    public function __construct()
     {
         $this->databaseConnection = $this->getPdo();
-        $this->pathToFile = $pathToFile;
     }
 
     private function getPdo(): PDO
@@ -104,10 +102,5 @@ class GamePersisterService
         }
         $data = $this->databaseConnection->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         return $data;
-    }
-
-    private function saveDataToFile($data)
-    {
-        file_put_contents($this->pathToFile, json_encode($data));
     }
 }

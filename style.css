@@ -28,17 +28,14 @@ body {
   box-sizing: border-box;
 }
 
-.field.red {
-  background-color: #ff0000;
+.field.normalField {
+  background-color: #dadada;
 }
-.field.yellow {
-  background-color: #ffff00;
+.field.startField {
+  background-color: #009dff;
 }
-.field.green {
-  background-color: #00ff00;
-}
-.field.blue {
-  background-color: #0000ff;
+.field.finishField {
+  background-color: #ff9d00;
 }
 
 .player {
