@@ -27,19 +27,16 @@ class GamePersisterService
     }
 
 
-    /*public function resetDataForNewGame()
+    public function resetDataForNewGame()
     {
-        $data = [
-            'gameData' => [
-                "state" => 0,
-                "playerCount" => 0,
-                "activePlayer" => "",
-                "dataGrid" => [],
-            ],
-            'playersData' => []
-        ];
-        $this->saveDataToFile($data);
-    }*/
+        $sql = "SHOW TABLES";
+        $data = $this->databaseConnection->query($sql);
+        $tables = $data->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($tables as $table) {
+            $this->databaseConnection->query("TRUNCATE TABLE $table");
+        }
+        header("refresh:0");
+    }
 
     public function updateData($dataToUpdate)
     {

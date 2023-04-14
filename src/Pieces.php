@@ -3,12 +3,12 @@
 class Pieces
 {
     private $id;
-    private $owningPlayerID;
+    private $owningPlayer;
 
 
-    public function __construct($owningPlayerID)
+    public function __construct($owningPlayer)
     {
-        $this->owningPlayerID = $owningPlayerID;
+        $this->owningPlayer = $owningPlayer;
         $this->id = $this->generateID();
     }
 
@@ -27,5 +27,25 @@ class Pieces
     {
         $pieceID =  'Piece' . substr(str_replace(['+', '/', '='], '', base64_encode(random_bytes(5))), 0, 7);
         return $pieceID;
+    }
+
+    /**
+     * Get the value of owningPlayer
+     */
+    public function getOwningPlayer()
+    {
+        return $this->owningPlayer;
+    }
+
+    /**
+     * Set the value of owningPlayer
+     *
+     * @return  self
+     */
+    public function setOwningPlayer($owningPlayer)
+    {
+        $this->owningPlayer = $owningPlayer;
+
+        return $this;
     }
 }

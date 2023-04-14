@@ -5,10 +5,12 @@ class Board
     private $activePlayer = null;
     private array $players = [];
     private GamePersisterService $gamePersisterService;
+    private Pieces $pieces;
+    private Base $base;
     private array $dataGrid;
-    private int $countOfFields = 88;
     private $playerCount;
     private int $state = 0;
+    private int $countOfFields = 121;
     private DataFactory $dataFactory;
     private string $gameID;
 
@@ -24,6 +26,12 @@ class Board
 
         $this->dataFactory = new DataFactory();
         $this->initializeGame();
+
+        if (!empty($this->players)) {
+            foreach ($this->players as $player) {
+                $this->base = new Base($player);
+            }
+        }
     }
 
     private function initializeGame()
@@ -73,6 +81,44 @@ class Board
         $this->addPlayer($newPlayer);
     }
 
+    private function checkIfInsert($table)
+    {
+        $arrayToLoad = [
+            "table" => $table,
+            "colum" => '*',
+            "game_id" => $this->gameID,
+        ];
+
+        $data = $this->gamePersisterService->loadData($arrayToLoad);
+
+        // Special case for Player
+        if ($table == "Players") {
+            if (sizeof($data) != $this->playerCount) {
+                return true;
+            }
+        }
+
+        // Special case for Pieces
+        if ($table == "Pieces") {
+            if (sizeof($data) != 4 * $this->playerCount) {
+                return true;
+            }
+        }
+
+        // Special case for Bases
+        if ($table == "Bases") {
+            if (sizeof($data) != 4) {
+                return true;
+            }
+        }
+
+        if (empty($data)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public function saveData()
     {
         $playerData = [];
@@ -88,8 +134,27 @@ class Board
                 'game_id' => $this->gameID,
             ];
 
-            $dataForPlayer = $this->dataFactory->createArrayForInsert("Players", $playerData);
-            $this->gamePersisterService->insertData($dataForPlayer);
+            if ($this->checkIfInsert("Players")) {
+                $this->gamePersisterService->insertData(
+                    $this->dataFactory->createArrayForInsert("Players", $playerData)
+                );
+            } else {
+                $this->gamePersisterService->updateData(
+                    $this->dataFactory->createArrayForUpdate("Players", array_keys($playerData), $playerData)
+                );
+            }
+
+            $baseData = [
+                'color' => $player->getColor(),
+                'player_id' => $player->getPlayerID(),
+                'game_id' => $this->gameID,
+            ];
+
+            if ($this->checkIfInsert("Bases")) {
+                $this->gamePersisterService->insertData(
+                    $this->dataFactory->createArrayForInsert("Bases", $baseData)
+                );
+            }
 
             $pieces = $player->getPieces();
             foreach ($pieces as $piece) {
@@ -99,8 +164,15 @@ class Board
                     'owning_player_id' => $player->getPlayerID(),
                     'game_id' => $this->gameID,
                 ];
-                $dataForPieces = $this->dataFactory->createArrayForInsert("Pieces", $pieces);
-                $this->gamePersisterService->insertData($dataForPieces);
+                if ($this->checkIfInsert("Pieces")) {
+                    $this->gamePersisterService->insertData(
+                        $this->dataFactory->createArrayForInsert("Pieces", $pieces)
+                    );
+                } else {
+                    $this->gamePersisterService->updateData(
+                        $this->dataFactory->createArrayForUpdate("Pieces", array_keys($pieces), $pieces)
+                    );
+                }
             }
         }
 
@@ -111,19 +183,13 @@ class Board
             'game_id' => $this->gameID,
         ];
 
-        $arrayToLoad = [
-            "table" => 'GameData',
-            "colum" => '*',
-            "game_id" => $this->gameID,
-        ];
-
-        $dataForGame = $this->dataFactory->createArrayForInsert("GameData", $gameData);
-
-        if (empty($this->gamePersisterService->loadData($arrayToLoad))) {
-            $this->gamePersisterService->insertData($dataForGame);
+        if ($this->checkIfInsert("GameData")) {
+            $this->gamePersisterService->insertData(
+                $this->dataFactory->createArrayForInsert("GameData", $gameData)
+            );
         } else {
             $this->gamePersisterService->updateData(
-                $this->dataFactory->createArrayForUpdate($arrayToLoad["table"], array_keys($gameData), $gameData)
+                $this->dataFactory->createArrayForUpdate("GameData", array_keys($gameData), $gameData)
             );
         }
     }
@@ -145,8 +211,8 @@ class Board
 
     public function renderIntputsForPlayerCount(): string
     {
-        return '<input type="number" name="playerCount" placeholder="Anzahl Spieler">
-                <input class="btn" type="submit" value="Submit" name="submit">';
+        return '<input type="number" id="playerCount" name="playerCount" placeholder="Anzahl Spieler">
+                <input class="btn" id="submit" type="submit" value="Submit" name="submit">';
     }
 
     public function renderInputsForPlayerNames($playerCount)
@@ -155,14 +221,14 @@ class Board
 
         $inputs = [];
         for ($i = 0; $i < $playerCount; $i++) {
-            $inputs[] = '<input type="text" name="namePlayer' . $i . '" placeholder="Name">';
+            $inputs[] = '<input type="text" id="player' . $i . '" name="namePlayer' . $i . '" placeholder="Name">';
         }
 
         $html .= implode('', $inputs);
 
         $html .= '
             </div>
-                <input type="submit" value="Submit Player Names" name="submitNamesOfPlayer">
+                <input type="submit" id="submit" value="Submit Player Names" name="submitNamesOfPlayer">
            </div>';
         return $html;
     }
@@ -174,19 +240,10 @@ class Board
 
     private function generateDataGridForBoard()
     {
-        $dataGrid = [
-            [2, 2, 0, 0, 1, 1, 1, 0, 0, 2, 2],
-            [2, 2, 0, 0, 1, 3, 1, 0, 0, 2, 2],
-            [0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1],
-            [1, 3, 3, 3, 3, 0, 3, 3, 3, 3, 1],
-            [1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1],
-            [0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0],
-            [2, 2, 0, 0, 1, 3, 1, 0, 0, 2, 2],
-            [2, 2, 0, 0, 1, 1, 1, 0, 0, 2, 2],
-        ];
+        $dataGrid = [];
+        for ($i = 0; $i < $this->countOfFields; $i++) {
+            $dataGrid[$i] = 0;
+        }
         $this->dataGrid = $dataGrid;
     }
 
@@ -194,18 +251,22 @@ class Board
     {
         $this->generateDataGridForBoard();
         $html = '<div class="playField">';
-        for ($y = 0; $y < sizeof($this->dataGrid); $y++) {
-            for ($x = 0; $x < sizeof($this->dataGrid); $x++) {
-                if ($this->dataGrid[$y][$x] == 0) {
-                    $html .= '<div class="field"></div>';
-                } elseif ($this->dataGrid[$y][$x] == 1) {
-                    $html .= '<div class="field normalField"></div>';
-                } elseif ($this->dataGrid[$y][$x] == 2) {
-                    $html .= '<div class="field startField"></div>';
-                } elseif ($this->dataGrid[$y][$x] == 3) {
-                    $html .= '<div class="field finishField"></div>';
-                }
+        foreach ($this->dataGrid as $value) {
+            switch ($value) {
+                case 0:
+                    $html .= '<div class="field">';
+                    break;
+                case 1:
+                    $html .= '<div class="field normalField">';
+                    break;
+                case 2:
+                    $html .= '<div class="field startField">';
+                    break;
+                case 3:
+                    $html .= '<div class="field finishField">';
+                    break;
             }
+            $html .= '</div>';
         }
         $html .= '</div>';
         return $html;
@@ -223,8 +284,8 @@ class Board
 
     public function newGame()
     {
-        //$this->gamePersisterService->resetDataForNewGame();
-        $this->initializeGame();
+        $this->gamePersisterService->resetDataForNewGame();
+        //$this->initializeGame();
     }
 
     public function getState()

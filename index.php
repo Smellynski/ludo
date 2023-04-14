@@ -46,6 +46,7 @@ if (isset($_POST["submitNamesOfPlayer"])) {
 <head>
     <title>Ludo</title>
     <link rel="stylesheet" href="style.css">
+    <script defer src="./src/index.js"></script>
 </head>
 
 <body>
@@ -55,7 +56,7 @@ if (isset($_POST["submitNamesOfPlayer"])) {
         ?>
 
         <input type="hidden" name="gameId" value="<?php echo $board->getGameId(); ?>" />
-        <input class="btn" type="submit" value="New Game" name="newGame">
+        <input class="btn" id="newGame" type="submit" value="New Game" name="newGame">
     </form>
 </body>
 
