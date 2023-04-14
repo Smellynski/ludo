@@ -26,12 +26,6 @@ class Board
 
         $this->dataFactory = new DataFactory();
         $this->initializeGame();
-
-        if (!empty($this->players)) {
-            foreach ($this->players as $player) {
-                $this->base = new Base($player);
-            }
-        }
     }
 
     private function initializeGame()
@@ -79,6 +73,8 @@ class Board
     {
         $newPlayer = new Player($name, $playerID, $colorIndex);
         $this->addPlayer($newPlayer);
+        $this->addPiecesToPlayer($newPlayer);
+        $this->addBaseToPlayer($newPlayer);
     }
 
     private function checkIfInsert($table)
@@ -157,6 +153,7 @@ class Board
             }
 
             $pieces = $player->getPieces();
+            var_dump($pieces);
             foreach ($pieces as $piece) {
                 $pieces =  [
                     'piece_id' => $piece,
@@ -207,6 +204,28 @@ class Board
     public function addPlayer(Player $player)
     {
         $this->players[] = $player;
+    }
+
+    private function addBaseToPlayer(Player $player)
+    {
+        $this->base = new Base($player);
+        $player->setBase($this->base);
+    }
+
+    private function addPiecesToPlayer(Player $player)
+    {
+        $piecesForPlayer = [
+            "pieceOne" => "",
+            "pieceTwo" => "",
+            "pieceThree" => "",
+            "pieceFour" => "",
+        ];
+
+        foreach ($piecesForPlayer as $piece) {
+            $piece = new Pieces($player);
+        }
+        var_dump($piecesForPlayer);
+        $player->setPieces($piecesForPlayer);
     }
 
     public function renderIntputsForPlayerCount(): string

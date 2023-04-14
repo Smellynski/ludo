@@ -5,8 +5,9 @@ class Player
 
     protected $name;
     private string $playerID;
-    private array $pieces;
     private string $color;
+    private array $pieces;
+    private Base $base;
 
 
     public function __construct($name, $playerID, $colorIndex)
@@ -14,9 +15,9 @@ class Player
         $this->name = $name;
         $this->playerID = $playerID;
         $this->color = $this->getColorByIndex($colorIndex);
-        $this->pieces = $this->addPieces();
+        $this->pieces = [];
+        $this->base = new Base($this);
     }
-
 
     /**
      * @return string
@@ -32,28 +33,8 @@ class Player
         return $colors[$colorIndex];
     }
 
-    private function addPieces()
-    {
-        $piecesForPlayer = [
-            "pieceOne" => "",
-            "pieceTwo" => "",
-            "pieceThree" => "",
-            "pieceFour" => "",
-        ];
 
-        foreach ($piecesForPlayer as &$piece) {
-            $piece = (new Pieces($this->playerID))->getId();
-        }
-        return $piecesForPlayer;
-    }
 
-    /**
-     * @return array
-     */
-    public function getPieces(): array
-    {
-        return $this->pieces;
-    }
 
     /**
      * @return string
@@ -92,12 +73,39 @@ class Player
         return $this->color;
     }
 
-    public function getPiecesAsString(): string
+    /**
+     * Get the value of pieces
+     */
+    public function getPieces()
     {
-        $pieces = "";
-        foreach ($this->pieces as $piece) {
-            $pieces .= $piece . ", ";
-        }
-        return $pieces;
+        return $this->pieces;
+    }
+
+    /**
+     * Set the value of pieces
+     *
+     * @return  self
+     */
+    public function setPieces($pieces)
+    {
+        $this->pieces = $pieces;
+    }
+
+    /**
+     * Get the value of base
+     */
+    public function getBase()
+    {
+        return $this->base;
+    }
+
+    /**
+     * Set the value of base
+     *
+     * @return  self
+     */
+    public function setBase($base)
+    {
+        $this->base = $base;
     }
 }

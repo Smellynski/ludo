@@ -3,10 +3,10 @@
 class Pieces
 {
     private $id;
-    private $owningPlayer;
+    private Player $owningPlayer;
 
 
-    public function __construct($owningPlayer)
+    public function __construct(Player $owningPlayer)
     {
         $this->owningPlayer = $owningPlayer;
         $this->id = $this->generateID();
