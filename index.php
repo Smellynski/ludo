@@ -25,6 +25,11 @@ if (isset($_POST["submit"])) {
     $board->saveData();
 }
 
+if (isset($_POST["rollDice"])) {
+    $board->rollDice();
+    $board->saveData();
+}
+
 if (isset($_POST["newGame"])) {
     $board->newGame();
 }

@@ -6,8 +6,7 @@ class RenderService
     public function renderToScreen(Board $board)
     {
         $contentToRender = $this->getContentToRender($board);
-        if (empty($contentToRender["error"]))
-        {
+        if (empty($contentToRender["error"])) {
             echo $contentToRender["html"];
         } else {
             echo $contentToRender["errot"];
@@ -21,8 +20,7 @@ class RenderService
             "html" => "",
             "error" => "",
         ];
-        switch ($board->getState())
-        {
+        switch ($board->getState()) {
             case 0:
                 $contentToRender["html"] = $board->renderIntputsForPlayerCount();
                 break;
@@ -30,7 +28,7 @@ class RenderService
                 $contentToRender["html"] = $board->renderInputsForPlayerNames($playerCount);
                 break;
             case 2:
-                $contentToRender["html"] = $board->generateHTMLForBoard();
+                $contentToRender["html"] = $board->generateView();
                 break;
         }
         return $contentToRender;
