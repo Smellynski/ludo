@@ -2,17 +2,17 @@
 
 class Pieces
 {
-    private $id;
+    private string $id;
     private Player $owningPlayer;
     private int $pos;
     private ?bool $inBase = true;
     private bool $inHome = false;
 
 
-    public function __construct(Player $owningPlayer, $pos, $id = 0)
+    public function __construct(Player $owningPlayer, $pos, string $id = '')
     {
         $this->owningPlayer = $owningPlayer;
-        if ($this->id == 0) {
+        if ($id == 0) {
             $this->id = $this->generateID();
         } else {
             $this->id = $id;

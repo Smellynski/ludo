@@ -21,12 +21,13 @@ class DataFactory
         return $dataArrayForInsert;
     }
 
-    public function createArrayForUpdate($table, $dataKeys, $data)
+    public function createArrayForUpdate($table, $dataKeys, $data, $where = [])
     {
         $temp = [];
         $dataArrayForUpdate = [
             "table" => $table,
-            "data" => []
+            "data" => [],
+            "where" => $where
         ];
 
         for ($i = 0; $i < sizeof($dataKeys); $i++) {

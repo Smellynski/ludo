@@ -32,13 +32,12 @@ class Board
     private function initializeGame()
     {
 
-
-        $rawData = $this->gamePersisterService->loadData($this->dataFactory->buildArrayToLoadData("GameData", "*", $this->gameID));
+        $rawData =  $this->gamePersisterService->loadData($this->dataFactory->buildArrayToLoadData("GameData", "*", $this->gameID));
 
         if (!empty($rawData)) {
             $data = $rawData[0];
             $this->state = $data["state"];
-            $this->activePlayer = $data["active_player"];
+            $activePlayerId = $data["active_player"];
             $this->playerCount = $data["player_count"];
             $this->gameID = $data["game_id"];
         }
@@ -49,6 +48,12 @@ class Board
             ), $this->gamePersisterService->loadData(
                 $this->dataFactory->buildArrayToLoadData("Pieces", "piece_id, pos, owning_player_id, inBase, inHome", $this->gameID)
             ));
+        }
+
+        foreach ($this->players as $player) {
+            if ($player->getPlayerID() == $activePlayerId) {
+                $this->activePlayer = $player;
+            }
         }
     }
 
@@ -61,19 +66,15 @@ class Board
 
     public function movePiece($diceNumber)
     {
-        foreach ($this->players as $player) {
-            if ($player->getPlayerID() == $this->activePlayer) {
-                $this->activePlayer = $player;
-            }
-        }
         $pieces = $this->activePlayer->getPieces();
         $pieceToMove = $pieces[0];
         if ($diceNumber == 6 && $pieceToMove->getInBase()) {
             $pieceToMove->setInBase(false);
-            $pieceToMove->setPos(0);
+            $pieceToMove->setPos($pieceToMove->getPos() + $diceNumber);
         } else {
             $pieceToMove->setPos($pieceToMove->getPos() + $diceNumber);
         }
+        $this->nextActivePlayer();
     }
 
     public function setInitialActivePlayer()
@@ -93,7 +94,7 @@ class Board
     }
 
 
-    public function createPlayer($name, $playerID, $colorIndex /*$color = int*/)
+    public function createPlayer($name, $playerID, $colorIndex)
     {
         $colors = [
             "red",
@@ -167,7 +168,9 @@ class Board
                 );
             } else {
                 $this->gamePersisterService->updateData(
-                    $this->dataFactory->createArrayForUpdate("Players", array_keys($playerData), $playerData)
+                    $this->dataFactory->createArrayForUpdate(
+                        "Players", array_keys($playerData), $playerData,
+                        ["colum" => "player_id", "value" => $player->getPlayerID()])
                 );
             }
 
@@ -185,7 +188,7 @@ class Board
 
             $pieces = $player->getPieces();
             foreach ($pieces as $piece) {
-                $pieces =  [
+                $pieceData =  [
                     'piece_id' => $piece->getId(),
                     "pos" => $piece->getPos(),
                     'owning_player_id' => $player->getPlayerID(),
@@ -195,11 +198,12 @@ class Board
                 ];
                 if ($this->checkIfInsert("Pieces")) {
                     $this->gamePersisterService->insertData(
-                        $this->dataFactory->createArrayForInsert("Pieces", $pieces)
+                        $this->dataFactory->createArrayForInsert("Pieces", $pieceData)
                     );
                 } else {
                     $this->gamePersisterService->updateData(
-                        $this->dataFactory->createArrayForUpdate("Pieces", array_keys($pieces), $pieces)
+                        $this->dataFactory->createArrayForUpdate(
+                            "Pieces", array_keys($pieceData), $pieceData, ["colum" => "piece_id", "value" => $piece->getId()])
                     );
                 }
             }
@@ -256,15 +260,17 @@ class Board
                 $player->addPiece($piece);
             }
         } else {
+            $pieces = [];
             foreach ($savedData as $pieceData) {
                 if ($pieceData['owning_player_id'] == $player->getPlayerID()) {
                     $piece = new Pieces($player, $pieceData['pos'], $pieceData['piece_id']);
                     $piece->setInBase($pieceData['inBase']);
                     $piece->setInHome($pieceData['inHome']);
-                    $this->pieces[] = $piece;
+                    $pieces[] = $piece;
                     $player->addPiece($piece);
                 }
             }
+            $this->pieces = $pieces;
         }
     }
 
@@ -324,8 +330,17 @@ class Board
         $this->generateDataGridForBoard();
         $html = '<div class="playField">';
         foreach ($this->dataGrid as $value) {
+            var_dump($value);
             $html .= '<div class="field">';
             // Piece will be added here
+            foreach ($this->players as $player){
+                foreach ($player->getPieces() as $piece){
+
+                    if($piece->getPos() == $value){
+                        $html .= '<div class="piece" style="color: ' . $player->getColor() . '">&#9817</div>';
+                    }
+                }
+            }
             $html .= '</div>';
         }
         $html .= '</div>';
@@ -336,11 +351,9 @@ class Board
     {
         $html = '';
 
-        $i = 0;
         foreach ($this->players as $player) {
             $html .= '<div class="base">';
             foreach ($player->getPieces() as $piece) {
-                $i++;
                 $html .= '<div class="field startField">';
                 // Piece will be added here
                 if ($piece->getInBase()) {
@@ -350,7 +363,6 @@ class Board
             }
             $html .= '</div>';
         }
-        var_dump($i);
         return $html;
     }
 
@@ -375,6 +387,8 @@ class Board
             $this->addPlayer($player);
             $this->addPiecesToPlayer($player, $savedPiecesData);
             $this->addBaseToPlayer($player);
+
+
         }
     }
 

@@ -39,8 +39,7 @@ class GamePersisterService
     }
 
     public function updateData($dataToUpdate)
-    {
-        if (is_array($dataToUpdate["data"])) {
+    {        if (is_array($dataToUpdate["data"])) {
             $tableName = $dataToUpdate["table"];
             $sql = 'UPDATE ' . $tableName . ' SET ';
             $sqlUpdateValues = [];
@@ -53,6 +52,11 @@ class GamePersisterService
                 }
             }
             $sql .= implode(",", $sqlUpdateValues);
+
+            if(!empty($dataToUpdate["where"])){
+                $sql .= ' WHERE ' . $dataToUpdate["where"]["colum"] . '="' . $dataToUpdate["where"]["value"] . '"';
+            }
+
             $this->databaseConnection->query($sql);
         }
     }
