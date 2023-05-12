@@ -10,9 +10,10 @@ class Board
     private array $dataGrid;
     private $playerCount;
     private int $state = 0;
-    private int $countOfFields = 121;
+    private int $countOfFields = 53;
     private DataFactory $dataFactory;
     private string $gameID;
+    private int $diceThrowCount;
 
 
     public function __construct($gameId = null)
@@ -38,6 +39,7 @@ class Board
             $data = $rawData[0];
             $this->state = $data["state"];
             $activePlayerId = $data["active_player"];
+            $this->diceThrowCount = $data["dice_throw_count"];
             $this->playerCount = $data["player_count"];
             $this->gameID = $data["game_id"];
         }
@@ -58,23 +60,80 @@ class Board
     }
 
 
-    public function rollDice()
+    public function rollDice(int $choosenFigure)
     {
-        $diceNumber = 6/*rand(1, 6)*/;
-        $this->movePiece($diceNumber);
+        $diceNumber = 6;
+        $this->movePiece($diceNumber, $choosenFigure);
     }
 
-    public function movePiece($diceNumber)
+    public function movePiece($diceNumber, $choosenFigure)
     {
         $pieces = $this->activePlayer->getPieces();
-        $pieceToMove = $pieces[0];
+        $pieceToMove = $pieces[$choosenFigure - 1];
         if ($diceNumber == 6 && $pieceToMove->getInBase()) {
             $pieceToMove->setInBase(false);
-            $pieceToMove->setPos($pieceToMove->getPos() + $diceNumber);
+            switch ($this->activePlayer->getColor()) {
+                case "red":
+                    $pieceToMove->setPos(0);
+                    break;
+                case "blue":
+                    $pieceToMove->setPos(12);
+                    break;
+                case "green":
+                    $pieceToMove->setPos(24);
+                    break;
+                case "yellow":
+                    $pieceToMove->setPos(36);
+                    break;
+            }
         } else {
-            $pieceToMove->setPos($pieceToMove->getPos() + $diceNumber);
+            if($this->checkIfAllFiguresAreInBase()){
+                $this->diceThrowCount++;
+                if($this->diceThrowCount >= 3){
+                    $this->diceThrowCount = 0;
+                    $this->nextActivePlayer();
+                    return;
+                }
+                return;
+            }
+
+             $pos = $pieceToMove->getPos() + $diceNumber;
+            if($pos > $this->countOfFields){
+                $pos = $pos - $this->countOfFields;
+            }
+
+            if($this->checkForThrow($pos)){
+                $this->executeThrow($pos);
+            }
+
+            $pieceToMove->setPos($pos);
         }
         $this->nextActivePlayer();
+    }
+
+    private function checkForThrow($pos){
+        if(is_object($this->dataGrid[$pos])){
+            $owningPlayer = $this->dataGrid[$pos]->getOwningPlayer();
+            if($owningPlayer->getPlayerID() != $this->activePlayer->getPlayerID()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function executeThrow($pos){
+        $this->dataGrid[$pos]->setInBase(true);
+        $this->dataGrid[$pos]->setPos(0);
+    }
+
+    private function checkIfAllFiguresAreInBase(){
+        $pieces = $this->activePlayer->getPieces();
+        foreach($pieces as $piece){
+            if(!$piece->getInBase()){
+                return false;
+            }
+        }
+        return true;
     }
 
     public function setInitialActivePlayer()
@@ -216,6 +275,7 @@ class Board
             'active_player' => $this->activePlayer != null ? $this->activePlayer->getPlayerID() : '',
             'player_count' => $this->playerCount ?: 0,
             'game_id' => $this->gameID,
+            'dice_throw_count' => ($this->diceThrowCount ?? 0),
         ];
 
         if ($this->checkIfInsert("GameData")) {
@@ -305,7 +365,6 @@ class Board
 
     private function placePieces()
     {
-
         $pieces = [];
         foreach ($this->players as $player) {
             $pieces = array_merge($pieces, $player->getPieces());
@@ -313,8 +372,11 @@ class Board
 
         foreach ($pieces as $piece) {
             $piecePos = $piece->getPos();
-            $this->dataGrid[$piecePos] = $piece;
+            if(!$piece->getInBase()){
+                $this->dataGrid[$piecePos] = $piece;
+            }
         }
+
     }
 
     private function generateDataGridForBoard()
@@ -329,18 +391,13 @@ class Board
     {
         $this->generateDataGridForBoard();
         $html = '<div class="playField">';
-        foreach ($this->dataGrid as $value) {
-            var_dump($value);
+        foreach ($this->dataGrid as $key => $value) {
             $html .= '<div class="field">';
-            // Piece will be added here
-            foreach ($this->players as $player){
-                foreach ($player->getPieces() as $piece){
-
-                    if($piece->getPos() == $value){
-                        $html .= '<div class="piece" style="color: ' . $player->getColor() . '">&#9817</div>';
-                    }
+                if(is_object($value)){
+                    $html .= '<div class="piece"
+                        style="color: ' . $value->getOwningPlayer()->getColor() . '; 
+                        ">&#9817;</div>';
                 }
-            }
             $html .= '</div>';
         }
         $html .= '</div>';
@@ -352,12 +409,31 @@ class Board
         $html = '';
 
         foreach ($this->players as $player) {
-            $html .= '<div class="base">';
+            $html .= '<div class="specialField base">';
             foreach ($player->getPieces() as $piece) {
                 $html .= '<div class="field startField">';
-                // Piece will be added here
                 if ($piece->getInBase()) {
-                    $html .= '<div class="piece" style="color: ' . $player->getColor() . '">&#9817</div>';
+                    $html .= '<div  class="piece"
+                    style="color: ' . $player->getColor() . '; 
+                    ">&#9817;</div>';
+                }
+                $html .= '</div>';
+            }
+            $html .= '</div>';
+        }
+        return $html;
+    }
+
+    private function generateHTMLForHome(){
+        $html = '';
+        foreach ($this->players as $player) {
+            $html .= '<div class="specialField home">';
+            foreach ($player->getPieces() as $piece) {
+                $html .= '<div class="field homeField">';
+                if ($piece->getInHome()) {
+                    $html .= '<div  class="piece"
+                    style="color: ' . $player->getColor() . '; 
+                    ">&#9817;</div>';
                 }
                 $html .= '</div>';
             }
@@ -373,7 +449,9 @@ class Board
         $content .= '<div class="board">';
         $content .= $this->generateHTMLForBase();
         $content .= $this->generateHTMLForBoard();
+        $content .= $this->generateHTMLForHome();
         $content .= '</div>';
+        $content .= '<input type="number" name="choosenFigure">';
         $content .= ' <input class="btn" id="rollDice" type="submit" value="roll Dice" name="rollDice">';
         return $content;
     }
@@ -387,8 +465,7 @@ class Board
             $this->addPlayer($player);
             $this->addPiecesToPlayer($player, $savedPiecesData);
             $this->addBaseToPlayer($player);
-
-
+            $this->generateDataGridForBoard();
         }
     }
 

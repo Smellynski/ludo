@@ -26,8 +26,16 @@ if (isset($_POST["submit"])) {
 }
 
 if (isset($_POST["rollDice"])) {
-    $board->rollDice();
-    $board->saveData();
+    if(isset($_POST["choosenFigure"])){
+        $choosenFigure = $_POST["choosenFigure"];
+        if(empty($choosenFigure)){
+            header("Refresh: 2; url=index.php");
+            echo "Please choose a figure";
+            exit;
+        }
+        $board->rollDice($choosenFigure);
+        $board->saveData();
+    }
 }
 
 if (isset($_POST["newGame"])) {

@@ -9,10 +9,10 @@ class Pieces
     private bool $inHome = false;
 
 
-    public function __construct(Player $owningPlayer, $pos, string $id = '')
+    public function __construct(Player $owningPlayer, $pos, $id = '')
     {
         $this->owningPlayer = $owningPlayer;
-        if ($id == 0) {
+        if ($id == "") {
             $this->id = $this->generateID();
         } else {
             $this->id = $id;

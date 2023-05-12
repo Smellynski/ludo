@@ -56,7 +56,6 @@ class GamePersisterService
             if(!empty($dataToUpdate["where"])){
                 $sql .= ' WHERE ' . $dataToUpdate["where"]["colum"] . '="' . $dataToUpdate["where"]["value"] . '"';
             }
-
             $this->databaseConnection->query($sql);
         }
     }

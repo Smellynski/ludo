@@ -1,60 +1,104 @@
-.error {
-  color: red;
-  font-size: larger;
+/* apply a reset to remove default margin and padding on elements */
+* {
+  margin: 0;
+  padding: 0;
 }
+
 body {
+  margin-top: 20px;
   font-family: Arial, sans-serif;
   text-align: center;
   background-color: #dddddd;
 }
 
+.board {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+}
+
 .playField {
   display: flex;
   flex-wrap: wrap;
-  width: 500px;
-  height: 500px;
-  margin: auto;
+  width: 300px;
+  height: 300px;
   background-color: #ffffff;
   border: 2px solid #000;
   box-sizing: border-box;
+  margin-right: 30px;
+  padding: 10px;
+  margin-left: 30px;
+}
+
+.specialField {
+  width: 100px;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  padding: 25px;
+}
+
+.specialField.home {
+  background-color: #ff9d00;
+}
+
+.specialField.base {
+  background-color: #009dff;
+}
+
+.piece {
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  padding: 15px;
+  position: absolute;
+  border-radius: 50%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px #000;
 }
 
 .field {
-  width: 40px;
-  height: 40px;
+  float: left;
+  width: 30px;
+  height: 30px;
   margin: 2px;
-  background-color: #ffffff;
   border: 1px solid #000;
   box-sizing: border-box;
+  position: relative;
 }
 
 .field.normalField {
   background-color: #dadada;
 }
+
 .field.startField {
   background-color: #009dff;
 }
-.field.finishField {
-  background-color: #ff9d00;
-}
 
-.player {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  position: absolute;
-  z-index: 1;
+.field.homeField {
+  background-color: #ff9d00;
 }
 
 .player.red {
   background-color: #ff0000;
 }
+
 .player.yellow {
   background-color: #ffff00;
 }
+
 .player.green {
   background-color: #00ff00;
 }
+
 .player.blue {
   background-color: #0000ff;
 }
