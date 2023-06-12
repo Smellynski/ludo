@@ -6,19 +6,19 @@ CREATE TABLE GameData (
    state VARCHAR(255),
    active_player VARCHAR(255),
    player_count int(11),
-   game_id VARCHAR(255),
+   game_id VARCHAR(255)
 );
 
 CREATE TABLE Players(
    player_name VARCHAR(255),
    player_id VARCHAR(255),
    color VARCHAR(255),
-   game_id VARCHAR(255),
+   game_id VARCHAR(255)
 );
 
 CREATE TABLE Pieces(
    piece_id VARCHAR(255),
    pos VARCHAR(255),
    owning_player_id VARCHAR(255),
-   game_id VARCHAR(255),
+   game_id VARCHAR(255)
 );

@@ -22,7 +22,3 @@ function autoFillPlayerNames() {
     document.getElementById("submit").click();
   }
 }
-
-function pressNewGame() {
-  document.getElementById("newGame").click();
-}

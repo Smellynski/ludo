@@ -111,6 +111,15 @@ class Board
         $this->nextActivePlayer();
     }
 
+    private function pusten($diceNumber, $choosenFigure){
+        $piecesThatCanThrow = [];
+        foreach ($this->activePlayer->getPieces() as $piece){
+            if($this->checkForThrow($piece->getPos() + $diceNumber)){
+                $piecesThatCanThrow[] = $piece;
+            }
+        }
+    }
+
     private function checkForThrow($pos){
         if(is_object($this->dataGrid[$pos])){
             $owningPlayer = $this->dataGrid[$pos]->getOwningPlayer();
@@ -467,6 +476,28 @@ class Board
             $this->addBaseToPlayer($player);
             $this->generateDataGridForBoard();
         }
+    }
+
+    private function getPiecesFromActiveplayerOnField(){
+        $pieces = [];
+        foreach ($this->activePlayer->getPieces() as $piece){
+            if(!$piece->getInBase() && !$piece->getInHome()){
+                $pieces[] = $piece;
+            }
+        }
+        return $pieces;
+    }
+
+    public function generatePopup(){
+        $pieces = $this->getPiecesFromActiveplayerOnField();
+        $html = '<div class="popup">';
+        $html .= '<h1>Choose a figure to throw</h1>';
+        $html .= '<form action="index.php" method="post">';
+        foreach ($pieces as $piece){
+            $html .= '<input type="radio" id="piece" name="choosenFigure" value="' . "Piece on Position " . $piece->getPos() . '">';
+        }
+        $html .= '</form>';
+        $html .= '</div>';
     }
 
     public function newGame()
