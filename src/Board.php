@@ -32,7 +32,6 @@ class Board
 
     private function initializeGame()
     {
-
         $rawData =  $this->gamePersisterService->loadData($this->dataFactory->buildArrayToLoadData("GameData", "*", $this->gameID));
 
         if (!empty($rawData)) {
@@ -62,7 +61,7 @@ class Board
 
     public function rollDice(int $choosenFigure)
     {
-        $diceNumber = 6;
+        $diceNumber = 3;
         $this->movePiece($diceNumber, $choosenFigure);
     }
 
@@ -87,9 +86,9 @@ class Board
                     break;
             }
         } else {
-            if($this->checkIfAllFiguresAreInBase()){
+            if ($this->checkIfAllFiguresAreInBase()) {
                 $this->diceThrowCount++;
-                if($this->diceThrowCount >= 3){
+                if ($this->diceThrowCount >= 3) {
                     $this->diceThrowCount = 0;
                     $this->nextActivePlayer();
                     return;
@@ -97,13 +96,19 @@ class Board
                 return;
             }
 
-             $pos = $pieceToMove->getPos() + $diceNumber;
-            if($pos > $this->countOfFields){
+            $pos = $pieceToMove->getPos() + $diceNumber;
+            if ($pos > $this->countOfFields) {
                 $pos = $pos - $this->countOfFields;
             }
 
-            if($this->checkForThrow($pos)){
-                $this->executeThrow($pos);
+            if ($this->pusten($diceNumber, $pieceToMove)) {
+                $this->nextActivePlayer();
+                return;
+            }
+
+            if ($this->checkForThrow($pos)) {
+                $this->dataGrid[$pos]->setInBase(true);
+                $this->dataGrid[$pos]->setPos(0);
             }
 
             $pieceToMove->setPos($pos);
@@ -111,34 +116,41 @@ class Board
         $this->nextActivePlayer();
     }
 
-    private function pusten($diceNumber, $choosenFigure){
+    //choosenFigure is normaly a int but in this case its a object Pieces
+    private function pusten($diceNumber, Pieces $choosenFigure)
+    {
         $piecesThatCanThrow = [];
-        foreach ($this->activePlayer->getPieces() as $piece){
-            if($this->checkForThrow($piece->getPos() + $diceNumber)){
+        foreach ($this->activePlayer->getPieces() as $piece) {
+            if ($this->checkForThrow($piece->getPos() + $diceNumber)) {
                 $piecesThatCanThrow[] = $piece;
+                foreach ($piecesThatCanThrow as $piece) {
+                    if ($piece != $choosenFigure) {
+                        $piece->setPos(0);
+                        $piece->setInBase(true);
+                    }
+                }
             }
         }
     }
 
-    private function checkForThrow($pos){
-        if(is_object($this->dataGrid[$pos])){
+    private function checkForThrow($pos)
+    {
+        if (is_object($this->dataGrid[$pos])) {
             $owningPlayer = $this->dataGrid[$pos]->getOwningPlayer();
-            if($owningPlayer->getPlayerID() != $this->activePlayer->getPlayerID()){
+            if ($owningPlayer->getPlayerID() != $this->activePlayer->getPlayerID()) {
                 return true;
             }
         }
         return false;
     }
 
-    private function executeThrow($pos){
-        $this->dataGrid[$pos]->setInBase(true);
-        $this->dataGrid[$pos]->setPos(0);
-    }
 
-    private function checkIfAllFiguresAreInBase(){
+
+    private function checkIfAllFiguresAreInBase()
+    {
         $pieces = $this->activePlayer->getPieces();
-        foreach($pieces as $piece){
-            if(!$piece->getInBase()){
+        foreach ($pieces as $piece) {
+            if (!$piece->getInBase()) {
                 return false;
             }
         }
@@ -218,7 +230,6 @@ class Board
     public function saveData()
     {
         $playerData = [];
-
         /**
          * @var $player Player
          */
@@ -237,8 +248,11 @@ class Board
             } else {
                 $this->gamePersisterService->updateData(
                     $this->dataFactory->createArrayForUpdate(
-                        "Players", array_keys($playerData), $playerData,
-                        ["colum" => "player_id", "value" => $player->getPlayerID()])
+                        "Players",
+                        array_keys($playerData),
+                        $playerData,
+                        ["colum" => "player_id", "value" => $player->getPlayerID()]
+                    )
                 );
             }
 
@@ -271,13 +285,15 @@ class Board
                 } else {
                     $this->gamePersisterService->updateData(
                         $this->dataFactory->createArrayForUpdate(
-                            "Pieces", array_keys($pieceData), $pieceData, ["colum" => "piece_id", "value" => $piece->getId()])
+                            "Pieces",
+                            array_keys($pieceData),
+                            $pieceData,
+                            ["colum" => "piece_id", "value" => $piece->getId()]
+                        )
                     );
                 }
             }
         }
-
-
 
         $gameData = [
             'state' => $this->getState(),
@@ -321,7 +337,6 @@ class Board
 
     private function addPiecesToPlayer(Player $player, $savedData = null)
     {
-
         if ($savedData == null) {
             for ($i = 0; $i < 4; $i++) {
                 $piece = new Pieces($player, 0);
@@ -381,11 +396,10 @@ class Board
 
         foreach ($pieces as $piece) {
             $piecePos = $piece->getPos();
-            if(!$piece->getInBase()){
+            if (!$piece->getInBase()) {
                 $this->dataGrid[$piecePos] = $piece;
             }
         }
-
     }
 
     private function generateDataGridForBoard()
@@ -393,20 +407,20 @@ class Board
         for ($i = 0; $i < $this->countOfFields; $i++) {
             $this->dataGrid[$i] = 0;
         }
-
         $this->placePieces();
     }
+
     private function generateHTMLForBoard()
     {
         $this->generateDataGridForBoard();
         $html = '<div class="playField">';
         foreach ($this->dataGrid as $key => $value) {
             $html .= '<div class="field">';
-                if(is_object($value)){
-                    $html .= '<div class="piece"
+            if (is_object($value)) {
+                $html .= '<div class="piece"
                         style="color: ' . $value->getOwningPlayer()->getColor() . '; 
                         ">&#9817;</div>';
-                }
+            }
             $html .= '</div>';
         }
         $html .= '</div>';
@@ -416,7 +430,6 @@ class Board
     private function generateHTMLForBase()
     {
         $html = '';
-
         foreach ($this->players as $player) {
             $html .= '<div class="specialField base">';
             foreach ($player->getPieces() as $piece) {
@@ -433,7 +446,8 @@ class Board
         return $html;
     }
 
-    private function generateHTMLForHome(){
+    private function generateHTMLForHome()
+    {
         $html = '';
         foreach ($this->players as $player) {
             $html .= '<div class="specialField home">';
@@ -466,7 +480,6 @@ class Board
     }
 
 
-
     private function loadPlayersFromSavedData(array $savedPlayerData, $savedPiecesData)
     {
         foreach ($savedPlayerData as $savedPlayer) {
@@ -478,22 +491,24 @@ class Board
         }
     }
 
-    private function getPiecesFromActiveplayerOnField(){
+    private function getPiecesFromActiveplayerOnField()
+    {
         $pieces = [];
-        foreach ($this->activePlayer->getPieces() as $piece){
-            if(!$piece->getInBase() && !$piece->getInHome()){
+        foreach ($this->activePlayer->getPieces() as $piece) {
+            if (!$piece->getInBase() && !$piece->getInHome()) {
                 $pieces[] = $piece;
             }
         }
         return $pieces;
     }
 
-    public function generatePopup(){
+    public function generatePopup()
+    {
         $pieces = $this->getPiecesFromActiveplayerOnField();
         $html = '<div class="popup">';
         $html .= '<h1>Choose a figure to throw</h1>';
         $html .= '<form action="index.php" method="post">';
-        foreach ($pieces as $piece){
+        foreach ($pieces as $piece) {
             $html .= '<input type="radio" id="piece" name="choosenFigure" value="' . "Piece on Position " . $piece->getPos() . '">';
         }
         $html .= '</form>';
